@@ -1,23 +1,44 @@
+"""Risk management: confidence-tier mapping and basic sanity checks.
+Returns tier parameters if a trade is allowed, otherwise None.
+"""
 import os
+from typing import Optional, Dict
 from .exchange import get_wallet_balance, get_open_position
 
+# (lo, hi, leverage, pos_size %, tp %)
+_TIERS = [
+    (0.60, 0.69, 3, 0.05, 0.015),
+    (0.70, 0.79, 5, 0.10, 0.020),
+    (0.80, 0.89, 7, 0.15, 0.025),
+    (0.90, 1.00, 10, 0.20, 0.030),
+]
+
+STOP_LOSS_PCT = float(os.getenv("STOP_LOSS_PCT", "0.15"))
+
+async def _select_tier(conf: float) -> Optional[Dict[str, float]]:
+    for lo, hi, lev, pct, tp in _TIERS:
+        if lo <= conf <= hi:
+            return {
+                "leverage": lev,
+                "pos_pct": pct,
+                "tp_pct": tp,
+                "sl_pct": STOP_LOSS_PCT,
+            }
+    return None
+
 async def risk_check(signal):
-    """Return True if the trade passes static risk checks."""
-    if os.getenv("RISK_ENABLED", "true").lower() != "true":
-        return True
+    """Return tier dict or None if risk checks fail."""
+    tier = await _select_tier(signal.confidence)
+    if not tier:
+        return None
 
-    # Confidence gate
-    threshold = float(os.getenv("CONF_THRESHOLD", "0"))
-    if signal.confidence < threshold:
-        return False
-
-    # Block if a position is already open
+    # No duplicate positions per symbol
     pos = await get_open_position(signal.symbol)
-    if pos and abs(float(pos["positionAmt"])) > 0:
-        return False
+    if pos and abs(float(pos.get("positionAmt", 0))) > 0:
+        return None
 
-    # Basic wallet sanity
+    # Require positive wallet balance
     if await get_wallet_balance() <= 0:
-        return False
+        return None
 
-    return True
+    return tier
