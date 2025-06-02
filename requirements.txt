@@ -6,4 +6,4 @@ APScheduler==3.10.4
 pydantic==2.7.1
 aiosqlite==0.19.0
 python-telegram-bot==20.8
-httpx==0.26.1
+httpx==0.26.0
