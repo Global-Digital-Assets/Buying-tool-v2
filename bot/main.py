@@ -1,9 +1,9 @@
-import os, asyncio
+import os
 from fastapi import FastAPI
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from .signal import fetch_signal
 from .risk import risk_check
-from .exchange import place_order, close_stale_positions
+from .exchange import place_order, close_stale_positions, refresh_stale_orders
 from .logger import log_event
 import uvicorn
 
@@ -27,11 +27,12 @@ async def trade_cycle():
 
 @app.on_event("startup")
 async def startup():
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(trade_cycle, "interval", minutes=15)
+    sched = AsyncIOScheduler()
+    sched.add_job(trade_cycle, "interval", minutes=15)
     ttl_hours = int(os.getenv("TTL_HOURS", "48"))
-    scheduler.add_job(close_stale_positions, "interval", hours=1, kwargs={"ttl_hours": ttl_hours})
-    scheduler.start()
+    sched.add_job(close_stale_positions, "interval", hours=1, kwargs={"ttl_hours": ttl_hours})
+    sched.add_job(refresh_stale_orders, "interval", minutes=5)  # cancel stale limits every 5 min
+    sched.start()
 
 @app.get("/health")
 async def health():
