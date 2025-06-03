@@ -38,7 +38,8 @@ async def place_order(signal, tier: Dict[str, float]):
     await client.futures_change_leverage(symbol=signal.symbol, leverage=tier["leverage"])
 
     balance = await get_wallet_balance()
-    notional = balance * tier["pos_pct"]
+    margin_capital = balance * tier["pos_pct"]  # use % of wallet as margin
+    notional = margin_capital * tier["leverage"]
     mark_price = float((await client.futures_mark_price(symbol=signal.symbol))["markPrice"])
     qty = await _round_qty(client, signal.symbol, notional / mark_price)
 
