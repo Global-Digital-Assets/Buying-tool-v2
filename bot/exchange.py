@@ -52,26 +52,23 @@ async def _round_price(client, symbol: str, price: float) -> float:
     return float(rounded)
 
 
+
 # --- Direction Helper ---
 _VALID_LONG_FLAGS = {"LONG", "BUY", "BULL", "BULLISH"}
+_VALID_SHORT_FLAGS = {"SHORT", "SELL", "BEAR", "BEARISH"}
 
 def _is_long(flag: str) -> bool:
-
-
-_VALID_SHORT_FLAGS = {"SHORT", "SELL", "BEAR", "BEARISH"}
+    """Return True if the flag implies a long (buy) direction."""
+    return (flag or "").upper() in _VALID_LONG_FLAGS
 
 def _direction(flag: str):
     """Return 'LONG', 'SHORT', or None for unknown flag."""
-    f=(flag or "").upper()
+    f = (flag or "").upper()
     if f in _VALID_LONG_FLAGS:
         return "LONG"
     if f in _VALID_SHORT_FLAGS:
         return "SHORT"
     return None
-
-    """Return True for strings that imply a LONG/BUY signal."""
-    return flag.upper() in _VALID_LONG_FLAGS
-
 
 # ---------------- Core ----------------
 
