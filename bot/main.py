@@ -9,15 +9,20 @@ import uvicorn
 
 app = FastAPI()
 trading_enabled = True
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 async def trade_cycle():
     if not trading_enabled:
         return
     try:
         signal = await fetch_signal()
+        if signal and DEBUG:
+            await log_event("DEBUG_SIGNAL", signal.model_dump())
         if not signal:
             return
         tier = await risk_check(signal)
+        if DEBUG:
+            await log_event("DEBUG_TIER", tier)
         if not tier:
             return
         order = await place_order(signal, tier)
