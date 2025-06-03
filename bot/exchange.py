@@ -39,6 +39,17 @@ async def _round_qty(client, symbol: str, qty: float) -> float:
     precision = int(round(-math.log(step, 10), 0))
     return float(round(qty, precision))
 
+
+
+async def _round_price(client, symbol: str, price: float) -> float:
+    """Round price to nearest permissible tick size for the symbol."""
+    info = await client.futures_exchange_info()
+    sym_info = next(s for s in info["symbols"] if s["symbol"] == symbol)
+    tick = float(next(f for f in sym_info["filters"] if f["filterType"] == "PRICE_FILTER")["tickSize"])
+    precision = max(0, abs(int(round(math.log10(tick)))))
+    rounded = round(round(price / tick) * tick, precision)
+    return float(rounded)
+
 # ---------------- Core ----------------
 async def place_order(signal, tier: Dict[str, float]):
     client = await _client()
@@ -58,6 +69,21 @@ async def place_order(signal, tier: Dict[str, float]):
 
     if tier["order_type"] == "market":
         entry = await client.futures_create_order(
+
+        # determine precise entry price for TP/SL
+        entry_price_src = None
+        try:
+            pos_info = await client.futures_position_information(symbol=signal.symbol)
+            if pos_info and abs(float(pos_info[0].get("positionAmt", 0))) > 0:
+                entry_price_src = float(pos_info[0]['entryPrice'])
+        except Exception:
+            pass
+        base_price = entry_price_src or (price if tier["order_type"]=="limit" else mark_price)
+        sl_price_raw = base_price * (1 - tier["sl_pct"]) if side == enums.SIDE_BUY else base_price * (1 + tier["sl_pct"])
+        tp_price_raw = base_price * (1 + tier["tp_pct"]) if side == enums.SIDE_BUY else base_price * (1 - tier["tp_pct"])
+        sl_price = await _round_price(client, signal.symbol, sl_price_raw)
+        tp_price = await _round_price(client, signal.symbol, tp_price_raw)
+
             symbol=signal.symbol,
             side=side,
             type=enums.ORDER_TYPE_MARKET,
@@ -67,8 +93,23 @@ async def place_order(signal, tier: Dict[str, float]):
     else:
         offset = tier["offset_pct"]
         price = mark_price * (1 + offset)
-        price = float(round(price, 2))
+        price = await _round_price(client, signal.symbol, price)
         entry = await client.futures_create_order(
+
+        # determine precise entry price for TP/SL
+        entry_price_src = None
+        try:
+            pos_info = await client.futures_position_information(symbol=signal.symbol)
+            if pos_info and abs(float(pos_info[0].get("positionAmt", 0))) > 0:
+                entry_price_src = float(pos_info[0]['entryPrice'])
+        except Exception:
+            pass
+        base_price = entry_price_src or (price if tier["order_type"]=="limit" else mark_price)
+        sl_price_raw = base_price * (1 - tier["sl_pct"]) if side == enums.SIDE_BUY else base_price * (1 + tier["sl_pct"])
+        tp_price_raw = base_price * (1 + tier["tp_pct"]) if side == enums.SIDE_BUY else base_price * (1 - tier["tp_pct"])
+        sl_price = await _round_price(client, signal.symbol, sl_price_raw)
+        tp_price = await _round_price(client, signal.symbol, tp_price_raw)
+
             symbol=signal.symbol,
             side=side,
             type=enums.ORDER_TYPE_LIMIT,
@@ -79,9 +120,7 @@ async def place_order(signal, tier: Dict[str, float]):
         )
 
     # Protective orders (reduce-only) placed regardless; they will stay pending until position opens.
-    sl_price = mark_price * (1 - tier["sl_pct"]) if side == enums.SIDE_BUY else mark_price * (1 + tier["sl_pct"])
     sl_price = float(round(sl_price, 2))
-    tp_price = mark_price * (1 + tier["tp_pct"]) if side == enums.SIDE_BUY else mark_price * (1 - tier["tp_pct"])
     tp_price = float(round(tp_price, 2))
 
     try:
