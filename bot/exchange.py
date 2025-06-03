@@ -123,44 +123,45 @@ async def place_order(signal, tier: Dict[str, float]):
         entry_price = limit_price
 
     # ----- protective orders -----
-    sl_raw = entry_price * (1 - tier["sl_pct"]) if side == enums.SIDE_BUY else entry_price * (1 + tier["sl_pct"])
-    tp_raw = entry_price * (1 + tier["tp_pct"]) if side == enums.SIDE_BUY else entry_price * (1 - tier["tp_pct"])
 
-    sl_price = await _round_price(client, signal.symbol, sl_raw)
-    tp_price = await _round_price(client, signal.symbol, tp_raw)
+    # compute prices already done above: sl_price, tp_price
 
+    errors: list[Exception] = []
 
-    errors = []
-    # stop-loss
+    # ----- stop-loss -----
     try:
         await client.futures_create_order(
-        symbol=signal.symbol,
-        side=opp_side,
-        type=enums.ORDER_TYPE_STOP_MARKET,
-        stopPrice=sl_price,
-        closePosition=True,
-        reduceOnly=True,
-        newClientOrderId=f"{client_id}-SL",
+            symbol=signal.symbol,
+            side=opp_side,
+            type=enums.ORDER_TYPE_STOP_MARKET,
+            stopPrice=sl_price,
+            closePosition=True,
+            reduceOnly=True,
+            newClientOrderId=f"{client_id}-SL",
         )
-except Exception as e:
-            errors.append(e)
-            await log_event("ERROR_TP_SL", {"symbol": signal.symbol, "order": "SL", "error": str(e)})
-        # take-profit
+    except Exception as e:
+        errors.append(e)
+        await log_event("ERROR_TP_SL", {"symbol": signal.symbol, "order": "SL", "error": str(e)})
+
+    # ----- take-profit -----
     try:
         await client.futures_create_order(
-        symbol=signal.symbol,
-        side=opp_side,
-        type=enums.ORDER_TYPE_LIMIT,
-        price=tp_price,
-        quantity=qty,
-        timeInForce="GTC",
-        reduceOnly=True,
-        newClientOrderId=f"{client_id}-TP",
+            symbol=signal.symbol,
+            side=opp_side,
+            type=enums.ORDER_TYPE_LIMIT,
+            price=tp_price,
+            quantity=qty,
+            timeInForce="GTC",
+            reduceOnly=True,
+            newClientOrderId=f"{client_id}-TP",
         )
-except Exception as e:
-            errors.append(e)
-            await log_event("ERROR_TP_SL", {"symbol": signal.symbol, "order": "TP", "error": str(e)})
-            if errors:
+    except Exception as e:
+        errors.append(e)
+        await log_event("ERROR_TP_SL", {"symbol": signal.symbol, "order": "TP", "error": str(e)})
+
+    if errors:
+        await client.close_connection()
+        raise errors[0]
         await client.close_connection()
         raise errors[0]
         
@@ -211,6 +212,7 @@ async def close_stale_positions(ttl_hours: int = 48):
         except Exception:
             pass
     await client.close_connection()
+
 
 
 
