@@ -11,11 +11,14 @@ app = FastAPI()
 trading_enabled = True
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
+
 async def trade_cycle():
     if not trading_enabled:
         return
     try:
         signals = await fetch_signals()
+        if not signals:
+            return
         balance = await get_wallet_balance()
         margin_cap_pct = float(os.getenv("MARGIN_CAP_PCT", "0.70"))
         margin_cap = balance * margin_cap_pct
@@ -25,38 +28,24 @@ async def trade_cycle():
             if DEBUG:
                 await log_event("MARGIN_CAP_HIT", {"margin_cap": margin_cap, "current_margin": current_margin})
             return
-        if DEBUG and signals:
+        if DEBUG:
             await log_event("DEBUG_SIGNALS", [s.model_dump() for s in signals])
-        if not signals:
-            return
         opened = 0
         for signal in signals:
+            tier = await risk_check(signal)
+            if not tier:
+                continue
             required_margin = balance * tier["pos_pct"]
             if required_margin > available_margin:
                 continue
-            tier = await risk_check(signal)
-            if DEBUG and tier:
+            if DEBUG:
                 await log_event("DEBUG_TIER", {"symbol": signal.symbol, **tier})
-            if not tier:
-                continue
             order = await place_order(signal, tier)
-            available_margin -= required_margin
             await log_event("ORDER_PLACED", order)
-            opened += 1
-            if opened >= 10:
-                break
-        if signal and DEBUG:
-            await log_event("DEBUG_SIGNAL", signal.model_dump())
-        if not signal:
-            return
-        tier = await risk_check(signal)
-        if DEBUG:
-            await log_event("DEBUG_TIER", tier)
-        if not tier:
-            return
-        order = await place_order(signal, tier)
             available_margin -= required_margin
-        await log_event("ORDER_PLACED", order)
+            opened += 1
+            if opened >= 10 or available_margin <= 0:
+                break
     except Exception as e:
         await log_event("ERROR", str(e))
 
