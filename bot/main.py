@@ -57,9 +57,9 @@ async def trade_cycle():
 @app.on_event("startup")
 async def startup():
     sched = AsyncIOScheduler()
-    sched.add_job(trade_cycle, "interval", minutes=15)
+    sched.add_job(trade_cycle, "interval", minutes=15, max_instances=1)
     ttl_hours = int(os.getenv("TTL_HOURS", "48"))
-    sched.add_job(close_stale_positions, "interval", hours=1, kwargs={"ttl_hours": ttl_hours})
+    sched.add_job(close_stale_positions, "interval", hours=1, kwargs={"ttl_hours": ttl_hours}, max_instances=1)
     sched.add_job(refresh_stale_orders, "interval", minutes=5)  # cancel stale limits every 5 min
     sched.start()
 
