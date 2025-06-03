@@ -90,8 +90,8 @@ async def place_order(signal, tier: Dict[str, float]):
 
     dir_ = _direction(getattr(signal, "side", ""))
     if dir_ is None:
-    await client.close_connection()
-    raise ValueError(f"Unknown side flag: {getattr(signal, 'side', '')}")
+        await client.close_connection()
+        raise ValueError(f"Unknown side flag: {getattr(signal, 'side', '')}")
     is_long = dir_ == "LONG"
     side = enums.SIDE_BUY if is_long else enums.SIDE_SELL
     opp_side = enums.SIDE_SELL if is_long else enums.SIDE_BUY
@@ -199,3 +199,4 @@ async def close_stale_positions(ttl_hours: int = 48):
         except Exception:
             pass
     await client.close_connection()
+
