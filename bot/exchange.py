@@ -18,11 +18,12 @@ async def get_wallet_balance(asset: str = "USDT") -> float:
     bal = next((b for b in balances if b["asset"] == asset), None)
     return float(bal["balance"]) if bal else 0.0
 
+
 async def get_open_position(symbol: str):
     c = await _client()
     positions = await c.futures_position_information(symbol=symbol)
     await c.close_connection()
-
+    return positions[0] if positions else None
 async def get_margin_usage() -> float:
     """Return current total initial margin in USDT for all open futures positions"""
     c = await _client()
@@ -51,13 +52,17 @@ async def _round_price(client, symbol: str, price: float) -> float:
     return float(rounded)
 
 # ---------------- Core ----------------
+
 async def place_order(signal, tier: Dict[str, float]):
+    """Create entry plus protective TP/SL orders. Returns brief order info."""
     client = await _client()
 
+    # Ensure leverage matches tier
     await client.futures_change_leverage(symbol=signal.symbol, leverage=tier["leverage"])
 
+    # ----- sizing -----
     balance = await get_wallet_balance()
-    margin_capital = balance * tier["pos_pct"]  # use % of wallet as margin
+    margin_capital = balance * tier["pos_pct"]
     notional = margin_capital * tier["leverage"]
     mark_price = float((await client.futures_mark_price(symbol=signal.symbol))["markPrice"])
     qty = await _round_qty(client, signal.symbol, notional / mark_price)
@@ -65,65 +70,40 @@ async def place_order(signal, tier: Dict[str, float]):
     side = enums.SIDE_BUY if getattr(signal, "side", "LONG").upper() == "LONG" else enums.SIDE_SELL
     opp_side = enums.SIDE_SELL if side == enums.SIDE_BUY else enums.SIDE_BUY
 
-    new_client_id = f"{CLIENT_PREFIX}-{int(time.time()*1000)}"
+    client_id = f"{CLIENT_PREFIX}-{int(time.time()*1000)}"
 
+    # ----- entry order -----
     if tier["order_type"] == "market":
-        entry = await client.futures_create_order(
-
-        # determine precise entry price for TP/SL
-        entry_price_src = None
-        try:
-            pos_info = await client.futures_position_information(symbol=signal.symbol)
-            if pos_info and abs(float(pos_info[0].get("positionAmt", 0))) > 0:
-                entry_price_src = float(pos_info[0]['entryPrice'])
-        except Exception:
-            pass
-        base_price = entry_price_src or (price if tier["order_type"]=="limit" else mark_price)
-        sl_price_raw = base_price * (1 - tier["sl_pct"]) if side == enums.SIDE_BUY else base_price * (1 + tier["sl_pct"])
-        tp_price_raw = base_price * (1 + tier["tp_pct"]) if side == enums.SIDE_BUY else base_price * (1 - tier["tp_pct"])
-        sl_price = await _round_price(client, signal.symbol, sl_price_raw)
-        tp_price = await _round_price(client, signal.symbol, tp_price_raw)
-
+        entry_resp = await client.futures_create_order(
             symbol=signal.symbol,
             side=side,
             type=enums.ORDER_TYPE_MARKET,
             quantity=qty,
-            newClientOrderId=new_client_id,
+            newClientOrderId=client_id,
         )
+        entry_price = float(entry_resp.get("avgPrice") or mark_price)
     else:
-        offset = tier["offset_pct"]
-        price = mark_price * (1 + offset)
-        price = await _round_price(client, signal.symbol, price)
-        entry = await client.futures_create_order(
-
-        # determine precise entry price for TP/SL
-        entry_price_src = None
-        try:
-            pos_info = await client.futures_position_information(symbol=signal.symbol)
-            if pos_info and abs(float(pos_info[0].get("positionAmt", 0))) > 0:
-                entry_price_src = float(pos_info[0]['entryPrice'])
-        except Exception:
-            pass
-        base_price = entry_price_src or (price if tier["order_type"]=="limit" else mark_price)
-        sl_price_raw = base_price * (1 - tier["sl_pct"]) if side == enums.SIDE_BUY else base_price * (1 + tier["sl_pct"])
-        tp_price_raw = base_price * (1 + tier["tp_pct"]) if side == enums.SIDE_BUY else base_price * (1 - tier["tp_pct"])
-        sl_price = await _round_price(client, signal.symbol, sl_price_raw)
-        tp_price = await _round_price(client, signal.symbol, tp_price_raw)
-
+        limit_price = await _round_price(client, signal.symbol, mark_price * (1 + tier["offset_pct"]))
+        entry_resp = await client.futures_create_order(
             symbol=signal.symbol,
             side=side,
             type=enums.ORDER_TYPE_LIMIT,
+            price=limit_price,
             quantity=qty,
-            price=price,
             timeInForce="GTC",
-            newClientOrderId=new_client_id,
+            newClientOrderId=client_id,
         )
+        entry_price = limit_price
 
-    # Protective orders (reduce-only) placed regardless; they will stay pending until position opens.
-    sl_price = float(round(sl_price, 2))
-    tp_price = float(round(tp_price, 2))
+    # ----- protective orders -----
+    sl_raw = entry_price * (1 - tier["sl_pct"]) if side == enums.SIDE_BUY else entry_price * (1 + tier["sl_pct"])
+    tp_raw = entry_price * (1 + tier["tp_pct"]) if side == enums.SIDE_BUY else entry_price * (1 - tier["tp_pct"])
+
+    sl_price = await _round_price(client, signal.symbol, sl_raw)
+    tp_price = await _round_price(client, signal.symbol, tp_raw)
 
     try:
+        # Stop-loss (reduce-only)
         await client.futures_create_order(
             symbol=signal.symbol,
             side=opp_side,
@@ -131,24 +111,24 @@ async def place_order(signal, tier: Dict[str, float]):
             stopPrice=sl_price,
             closePosition=True,
             reduceOnly=True,
-            newClientOrderId=f"{new_client_id}-SL",
+            newClientOrderId=f"{client_id}-SL",
         )
+        # Take-profit limit (reduce-only)
         await client.futures_create_order(
             symbol=signal.symbol,
             side=opp_side,
             type=enums.ORDER_TYPE_LIMIT,
-            quantity=qty,
             price=tp_price,
+            quantity=qty,
             timeInForce="GTC",
             reduceOnly=True,
-            newClientOrderId=f"{new_client_id}-TP",
+            newClientOrderId=f"{client_id}-TP",
         )
     except Exception:
-        pass  # tolerate if they fail due to no position yet
+        pass  # tolerate failures (e.g. order size below min)
 
     await client.close_connection()
-    return entry
-
+    return {"entry": entry_resp, "sl_price": sl_price, "tp_price": tp_price}
 # ---------------- Order TTL ----------------
 async def refresh_stale_orders(max_age_min: int = 15):
     """Cancel limit orders older than max_age_min; leave protective orders."""
