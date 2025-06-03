@@ -10,30 +10,41 @@ class Signal(BaseModel):
     confidence: float
     side: str = Field(default="LONG")  # analytics feed currently single-direction
 
-async def fetch_signal() -> Optional[Signal]:
-    url = os.getenv("SIGNAL_URL")
+aSYNC_TIMEOUT=5
+
+def _endpoint():
+    return os.getenv("SIGNAL_URL")
+
+def _threshold():
+    return float(os.getenv("CONF_THRESHOLD", "0.60"))
+
+async def fetch_signals(limit:int=50) -> List[Signal]:
+    """Return all signals >= threshold sorted high→low confidence (max `limit`)."""
+    url=_endpoint()
     if not url:
-        return None
+        return []
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            resp = await client.get(url)
+        async with httpx.AsyncClient(timeout=aSYNC_TIMEOUT) as client:
+            resp=await client.get(url)
         resp.raise_for_status()
-        data = resp.json()
+        data=resp.json()
         if not isinstance(data, list):
-            return None
-        # choose highest-confidence item ≥ threshold
-        threshold = float(os.getenv("CONF_THRESHOLD", "0.0"))
-        candidates: List[Signal] = []
+            return []
+        valid: List[Signal]=[]
+        th=_threshold()
         for item in data:
             try:
-                sig = Signal.model_validate(item)
-                if sig.confidence >= threshold:
-                    candidates.append(sig)
+                sig=Signal.model_validate(item)
+                if sig.confidence>=th:
+                    valid.append(sig)
             except ValidationError:
                 continue
-        if not candidates:
-            return None
-        candidates.sort(key=lambda s: s.confidence, reverse=True)
-        return candidates[0]
+        valid.sort(key=lambda s: s.confidence, reverse=True)
+        return valid[:limit]
     except Exception:
-        return None
+        return []
+
+async def fetch_signal() -> Optional[Signal]:
+    """Back-compat: return just top signal or None"""
+    sigs=await fetch_signals(limit=1)
+    return sigs[0] if sigs else None

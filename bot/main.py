@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from .signal import fetch_signal
+from .signal import fetch_signals
 from .risk import risk_check
 from .exchange import place_order, close_stale_positions, refresh_stale_orders
 from .logger import log_event
@@ -15,7 +15,23 @@ async def trade_cycle():
     if not trading_enabled:
         return
     try:
-        signal = await fetch_signal()
+        signals = await fetch_signals()
+        if DEBUG and signals:
+            await log_event("DEBUG_SIGNALS", [s.model_dump() for s in signals])
+        if not signals:
+            return
+        opened = 0
+        for signal in signals:
+            tier = await risk_check(signal)
+            if DEBUG and tier:
+                await log_event("DEBUG_TIER", {"symbol": signal.symbol, **tier})
+            if not tier:
+                continue
+            order = await place_order(signal, tier)
+            await log_event("ORDER_PLACED", order)
+            opened += 1
+            if opened >= 10:
+                break
         if signal and DEBUG:
             await log_event("DEBUG_SIGNAL", signal.model_dump())
         if not signal:
