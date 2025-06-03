@@ -88,13 +88,13 @@ async def place_order(signal, tier: Dict[str, float]):
 
 
 
-dir_ = _direction(getattr(signal, "side", ""))
-if dir_ is None:
+    dir_ = _direction(getattr(signal, "side", ""))
+    if dir_ is None:
     await client.close_connection()
     raise ValueError(f"Unknown side flag: {getattr(signal, 'side', '')}")
-is_long = dir_ == "LONG"
-side = enums.SIDE_BUY if is_long else enums.SIDE_SELL
-opp_side = enums.SIDE_SELL if is_long else enums.SIDE_BUY
+    is_long = dir_ == "LONG"
+    side = enums.SIDE_BUY if is_long else enums.SIDE_SELL
+    opp_side = enums.SIDE_SELL if is_long else enums.SIDE_BUY
 
     client_id = f"{CLIENT_PREFIX}-{int(time.time()*1000)}"
 
