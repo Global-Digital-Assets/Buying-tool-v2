@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from .signal import fetch_signals
 from .risk import risk_check
-from .exchange import place_order, close_stale_positions, refresh_stale_orders, get_wallet_balance, get_margin_usage
+from .exchange import place_order, _direction, close_stale_positions, refresh_stale_orders, get_wallet_balance, get_margin_usage
 from .logger import log_event
 import uvicorn
 
@@ -32,6 +32,12 @@ async def trade_cycle():
             await log_event("DEBUG_SIGNALS", [s.model_dump() for s in signals])
         opened = 0
         for signal in signals:
+
+dir_ = _direction(getattr(signal, "side", ""))
+if dir_ is None:
+    if DEBUG:
+        await log_event("SKIP_UNKNOWN_SIDE", signal.model_dump())
+    continue
             tier = await risk_check(signal)
             if not tier:
                 continue

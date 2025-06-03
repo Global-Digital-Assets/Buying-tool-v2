@@ -56,6 +56,19 @@ async def _round_price(client, symbol: str, price: float) -> float:
 _VALID_LONG_FLAGS = {"LONG", "BUY", "BULL", "BULLISH"}
 
 def _is_long(flag: str) -> bool:
+
+
+_VALID_SHORT_FLAGS = {"SHORT", "SELL", "BEAR", "BEARISH"}
+
+def _direction(flag: str):
+    """Return 'LONG', 'SHORT', or None for unknown flag."""
+    f=(flag or "").upper()
+    if f in _VALID_LONG_FLAGS:
+        return "LONG"
+    if f in _VALID_SHORT_FLAGS:
+        return "SHORT"
+    return None
+
     """Return True for strings that imply a LONG/BUY signal."""
     return flag.upper() in _VALID_LONG_FLAGS
 
@@ -77,7 +90,12 @@ async def place_order(signal, tier: Dict[str, float]):
     qty = await _round_qty(client, signal.symbol, notional / mark_price)
 
 
-is_long = _is_long(getattr(signal, "side", "BUY"))
+
+dir_ = _direction(getattr(signal, "side", ""))
+if dir_ is None:
+    await client.close_connection()
+    raise ValueError(f"Unknown side flag: {getattr(signal, 'side', '')}")
+is_long = dir_ == "LONG"
 side = enums.SIDE_BUY if is_long else enums.SIDE_SELL
 opp_side = enums.SIDE_SELL if is_long else enums.SIDE_BUY
 
