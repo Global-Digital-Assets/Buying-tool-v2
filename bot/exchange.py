@@ -22,6 +22,14 @@ async def get_open_position(symbol: str):
     c = await _client()
     positions = await c.futures_position_information(symbol=symbol)
     await c.close_connection()
+
+async def get_margin_usage() -> float:
+    """Return current total initial margin in USDT for all open futures positions"""
+    c = await _client()
+    acct = await c.futures_account()
+    await c.close_connection()
+    return float(acct.get("totalInitialMargin", 0.0))
+
     return positions[0] if positions else None
 
 async def _round_qty(client, symbol: str, qty: float) -> float:

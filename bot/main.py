@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from .signal import fetch_signals
 from .risk import risk_check
-from .exchange import place_order, close_stale_positions, refresh_stale_orders
+from .exchange import place_order, close_stale_positions, refresh_stale_orders, get_wallet_balance, get_margin_usage
 from .logger import log_event
 import uvicorn
 
@@ -16,18 +16,31 @@ async def trade_cycle():
         return
     try:
         signals = await fetch_signals()
+        balance = await get_wallet_balance()
+        margin_cap_pct = float(os.getenv("MARGIN_CAP_PCT", "0.70"))
+        margin_cap = balance * margin_cap_pct
+        current_margin = await get_margin_usage()
+        available_margin = margin_cap - current_margin
+        if available_margin <= 0:
+            if DEBUG:
+                await log_event("MARGIN_CAP_HIT", {"margin_cap": margin_cap, "current_margin": current_margin})
+            return
         if DEBUG and signals:
             await log_event("DEBUG_SIGNALS", [s.model_dump() for s in signals])
         if not signals:
             return
         opened = 0
         for signal in signals:
+            required_margin = balance * tier["pos_pct"]
+            if required_margin > available_margin:
+                continue
             tier = await risk_check(signal)
             if DEBUG and tier:
                 await log_event("DEBUG_TIER", {"symbol": signal.symbol, **tier})
             if not tier:
                 continue
             order = await place_order(signal, tier)
+            available_margin -= required_margin
             await log_event("ORDER_PLACED", order)
             opened += 1
             if opened >= 10:
@@ -42,6 +55,7 @@ async def trade_cycle():
         if not tier:
             return
         order = await place_order(signal, tier)
+            available_margin -= required_margin
         await log_event("ORDER_PLACED", order)
     except Exception as e:
         await log_event("ERROR", str(e))
