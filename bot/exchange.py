@@ -51,6 +51,15 @@ async def _round_price(client, symbol: str, price: float) -> float:
     rounded = round(round(price / tick) * tick, precision)
     return float(rounded)
 
+
+# --- Direction Helper ---
+_VALID_LONG_FLAGS = {"LONG", "BUY", "BULL", "BULLISH"}
+
+def _is_long(flag: str) -> bool:
+    """Return True for strings that imply a LONG/BUY signal."""
+    return flag.upper() in _VALID_LONG_FLAGS
+
+
 # ---------------- Core ----------------
 
 async def place_order(signal, tier: Dict[str, float]):
@@ -67,8 +76,10 @@ async def place_order(signal, tier: Dict[str, float]):
     mark_price = float((await client.futures_mark_price(symbol=signal.symbol))["markPrice"])
     qty = await _round_qty(client, signal.symbol, notional / mark_price)
 
-    side = enums.SIDE_BUY if getattr(signal, "side", "LONG").upper() == "LONG" else enums.SIDE_SELL
-    opp_side = enums.SIDE_SELL if side == enums.SIDE_BUY else enums.SIDE_BUY
+
+is_long = _is_long(getattr(signal, "side", "BUY"))
+side = enums.SIDE_BUY if is_long else enums.SIDE_SELL
+opp_side = enums.SIDE_SELL if is_long else enums.SIDE_BUY
 
     client_id = f"{CLIENT_PREFIX}-{int(time.time()*1000)}"
 
