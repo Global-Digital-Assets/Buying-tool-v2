@@ -32,12 +32,12 @@ async def trade_cycle():
             await log_event("DEBUG_SIGNALS", [s.model_dump() for s in signals])
         opened = 0
         for signal in signals:
-
-dir_ = _direction(getattr(signal, "side", ""))
-if dir_ is None:
-    if DEBUG:
-        await log_event("SKIP_UNKNOWN_SIDE", signal.model_dump())
-    continue
+            
+            dir_ = _direction(getattr(signal, "side", ""))
+            if dir_ is None:
+            if DEBUG:
+            await log_event("SKIP_UNKNOWN_SIDE", signal.model_dump())
+            continue
             tier = await risk_check(signal)
             if not tier:
                 continue
