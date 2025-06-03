@@ -142,9 +142,9 @@ async def place_order(signal, tier: Dict[str, float]):
         reduceOnly=True,
         newClientOrderId=f"{client_id}-SL",
         )
-    except Exception as e:
-    errors.append(e)
-        await log_event("ERROR_TP_SL", {"symbol": signal.symbol, "order": "SL", "error": str(e)})
+except Exception as e:
+            errors.append(e)
+            await log_event("ERROR_TP_SL", {"symbol": signal.symbol, "order": "SL", "error": str(e)})
         # take-profit
     try:
         await client.futures_create_order(
@@ -157,13 +157,13 @@ async def place_order(signal, tier: Dict[str, float]):
         reduceOnly=True,
         newClientOrderId=f"{client_id}-TP",
         )
-    except Exception as e:
-    errors.append(e)
-        await log_event("ERROR_TP_SL", {"symbol": signal.symbol, "order": "TP", "error": str(e)})
-        if errors:
-    await client.close_connection()
-    raise errors[0]
-
+except Exception as e:
+            errors.append(e)
+            await log_event("ERROR_TP_SL", {"symbol": signal.symbol, "order": "TP", "error": str(e)})
+            if errors:
+        await client.close_connection()
+        raise errors[0]
+        
 
     await client.close_connection()
     return {"entry": entry_resp, "sl_price": sl_price, "tp_price": tp_price}
@@ -211,6 +211,7 @@ async def close_stale_positions(ttl_hours: int = 48):
         except Exception:
             pass
     await client.close_connection()
+
 
 
 
