@@ -1,0 +1,152 @@
+import os
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+from fastapi import FastAPI
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+from .signal import fetch_signals
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+from .risk import risk_check
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+from .exchange import (
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    place_order,
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    _direction,
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    close_stale_positions,
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    refresh_stale_orders,
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    get_wallet_balance,
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    get_margin_usage,
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    get_today_realised_pnl,
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+)
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+        available_margin = margin_cap - current_margin
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+        if available_margin <= 0:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            if DEBUG:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                await log_event("MARGIN_CAP_HIT", {"margin_cap": margin_cap, "current_margin": current_margin})
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            return
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+        if DEBUG:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            await log_event("DEBUG_SIGNALS", [s.model_dump() for s in signals])
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+        opened = 0
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+        for signal in signals:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            dir_ = _direction(getattr(signal, "side", ""))
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            if dir_ is None:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                if DEBUG:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                    await log_event("SKIP_UNKNOWN_SIDE", signal.model_dump())
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                continue
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            tier = await risk_check(signal)
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            if not tier:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                continue
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            required_margin = balance * tier["pos_pct"]
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            if required_margin > available_margin:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                continue
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            if DEBUG:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                await log_event("DEBUG_TIER", {"symbol": signal.symbol, **tier})
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            if signal.symbol.upper() == "MASKUSDT":
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                continue
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            order = await place_order(signal, tier)
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            status = order.get("status")
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            if status == "success":
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                await log_event("ORDER_PLACED", order)
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            elif status == "partial_success":
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                await log_event("WARNING", order)
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            else:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                await log_event("ERROR", order)
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            available_margin -= required_margin
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            opened += 1
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+            if opened >= 10 or available_margin <= 0:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+                break
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    except Exception as e:
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+        await log_event("ERROR", str(e))
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+@app.on_event("startup")
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+async def startup():
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    sched = AsyncIOScheduler()
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    sched.add_job(trade_cycle, "interval", minutes=15, max_instances=1)
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    ttl_hours = int(os.getenv("TTL_HOURS", "48"))
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    sched.add_job(close_stale_positions, "interval", hours=1, kwargs={"ttl_hours": ttl_hours}, max_instances=1)
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    sched.add_job(refresh_stale_orders, "interval", minutes=5)  # cancel stale limits every 5 min
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    sched.start()
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+@app.get("/health")
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+async def health():
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    return {"status": "OK", "trading_enabled": trading_enabled}
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+@app.post("/halt")
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+async def halt():
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    global trading_enabled
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    trading_enabled = False
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    return {"status": "HALTED"}
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+if __name__ == "__main__":
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
+        # ----- daily loss cap -----        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))        realised_pnl = await get_today_realised_pnl()        if realised_pnl <= -balance * loss_cap_pct:            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})            return
