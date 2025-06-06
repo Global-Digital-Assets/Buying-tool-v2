@@ -1,4 +1,4 @@
-import os, math, time
+import os, math, time, datetime
 from typing import Dict
 from binance import AsyncClient, enums
 from .logger import log_event
@@ -70,6 +70,15 @@ def _direction(flag: str):
     if f in _VALID_SHORT_FLAGS:
         return "SHORT"
     return None
+
+# ---------------- P&L helpers ----------------
+async def get_today_realised_pnl(asset: str = "USDT") -> float:
+    """Sum realised PnL since 00:00 UTC today."""
+    client = await _client()
+    start = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    income = await client.futures_income_history(startTime=int(start.timestamp()*1000), incomeType="REALIZED_PNL")
+    await client.close_connection()
+    return sum(float(i["income"]) for i in income if i.get("asset") == asset)
 
 # ---------------- Core ----------------
 

@@ -1,13 +1,23 @@
 import os
+import uvicorn
 from fastapi import FastAPI
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
 from .signal import fetch_signals
 from .risk import risk_check
-from .exchange import place_order, _direction, close_stale_positions, refresh_stale_orders, get_wallet_balance, get_margin_usage
+from .exchange import (
+    place_order,
+    _direction,
+    close_stale_positions,
+    refresh_stale_orders,
+    get_wallet_balance,
+    get_margin_usage,
+    get_today_realised_pnl,
+)
 from .logger import log_event
-import uvicorn
 
 app = FastAPI()
+
 trading_enabled = True
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
@@ -20,6 +30,12 @@ async def trade_cycle():
         if not signals:
             return
         balance = await get_wallet_balance()
+        # ----- daily loss cap -----
+        loss_cap_pct = float(os.getenv("DAILY_LOSS_CAP_PCT", "0.02"))
+        realised_pnl = await get_today_realised_pnl()
+        if realised_pnl <= -balance * loss_cap_pct:
+            await log_event("DAILY_LOSS_CAP_HIT", {"pnl": realised_pnl, "cap": -balance * loss_cap_pct})
+            return
         margin_cap_pct = float(os.getenv("MARGIN_CAP_PCT", "0.70"))
         margin_cap = balance * margin_cap_pct
         current_margin = await get_margin_usage()
