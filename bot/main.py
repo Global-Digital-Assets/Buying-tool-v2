@@ -45,8 +45,18 @@ async def trade_cycle():
                 continue
             if DEBUG:
                 await log_event("DEBUG_TIER", {"symbol": signal.symbol, **tier})
+            if signal.symbol.upper() == "MASKUSDT":
+                continue
             order = await place_order(signal, tier)
-            await log_event("ORDER_PLACED", order)
+
+            status = order.get("status")
+            if status == "success":
+                await log_event("ORDER_PLACED", order)
+            elif status == "partial_success":
+                await log_event("WARNING", order)
+            else:
+                await log_event("ERROR", order)
+
             available_margin -= required_margin
             opened += 1
             if opened >= 10 or available_margin <= 0:

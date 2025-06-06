@@ -2,11 +2,23 @@ import os, math, time
 from typing import Dict
 from binance import AsyncClient, enums
 from .logger import log_event
+from functools import lru_cache
 
 API_KEY = os.getenv("API_KEY")
 API_SECRET = os.getenv("API_SECRET")
 TESTNET = os.getenv("BINANCE_TESTNET", "true").lower() == "true"
 CLIENT_PREFIX = "BOT"
+
+# ---- Symbol normalization (aliases for Binance Futures) ----
+_ALIAS_MAP = {
+    "SHIBUSDT": "1000SHIBUSDT",
+    "PEPEUSDT": "1000PEPEUSDT",
+    "LUNCUSDT": "1000LUNCUSDT",
+}
+
+def normalize_symbol(symbol: str) -> str:
+    """Return Binance Futures symbol alias if required."""
+    return _ALIAS_MAP.get(symbol, symbol)
 
 async def _client():
     return await AsyncClient.create(API_KEY, API_SECRET, testnet=TESTNET)
@@ -25,6 +37,7 @@ async def get_open_position(symbol: str):
     positions = await c.futures_position_information(symbol=symbol)
     await c.close_connection()
     return positions[0] if positions else None
+
 async def get_margin_usage() -> float:
     """Return current total initial margin in USDT for all open futures positions"""
     c = await _client()
@@ -32,26 +45,26 @@ async def get_margin_usage() -> float:
     await c.close_connection()
     return float(acct.get("totalInitialMargin", 0.0))
 
-    return positions[0] if positions else None
-
 async def _round_qty(client, symbol: str, qty: float) -> float:
     info = await client.futures_exchange_info()
-    sym_info = next(s for s in info["symbols"] if s["symbol"] == symbol)
+    sym_info = next((s for s in info["symbols"] if s["symbol"] == normalize_symbol(symbol)), None)
+    if not sym_info:
+        raise ValueError(f"Symbol not found in exchange info: {symbol}")
     step = float(next(f for f in sym_info["filters"] if f["filterType"] == "LOT_SIZE")["stepSize"])
     precision = int(round(-math.log(step, 10), 0))
     return float(round(qty, precision))
 
 
-
 async def _round_price(client, symbol: str, price: float) -> float:
     """Round price to nearest permissible tick size for the symbol."""
     info = await client.futures_exchange_info()
-    sym_info = next(s for s in info["symbols"] if s["symbol"] == symbol)
+    sym_info = next((s for s in info["symbols"] if s["symbol"] == normalize_symbol(symbol)), None)
+    if not sym_info:
+        raise ValueError(f"Symbol not found in exchange info: {symbol}")
     tick = float(next(f for f in sym_info["filters"] if f["filterType"] == "PRICE_FILTER")["tickSize"])
     precision = max(0, abs(int(round(math.log10(tick)))))
     rounded = round(round(price / tick) * tick, precision)
     return float(rounded)
-
 
 
 # --- Direction Helper ---
@@ -78,14 +91,15 @@ async def place_order(signal, tier: Dict[str, float]):
     client = await _client()
 
     # Ensure leverage matches tier
-    await client.futures_change_leverage(symbol=signal.symbol, leverage=tier["leverage"])
+    norm_sym = normalize_symbol(signal.symbol)
+    await client.futures_change_leverage(symbol=norm_sym, leverage=tier["leverage"])
 
     # ----- sizing -----
     balance = await get_wallet_balance()
     margin_capital = balance * tier["pos_pct"]
     notional = margin_capital * tier["leverage"]
-    mark_price = float((await client.futures_mark_price(symbol=signal.symbol))["markPrice"])
-    qty = await _round_qty(client, signal.symbol, notional / mark_price)
+    mark_price = float((await client.futures_mark_price(symbol=norm_sym))["markPrice"])
+    qty = await _round_qty(client, norm_sym, notional / mark_price)
 
 
 
@@ -102,7 +116,7 @@ async def place_order(signal, tier: Dict[str, float]):
     # ----- entry order -----
     if tier["order_type"] == "market":
         entry_resp = await client.futures_create_order(
-            symbol=signal.symbol,
+            symbol=norm_sym,
             side=side,
             type=enums.ORDER_TYPE_MARKET,
             quantity=qty,
@@ -110,9 +124,9 @@ async def place_order(signal, tier: Dict[str, float]):
         )
         entry_price = float(entry_resp.get("avgPrice") or mark_price)
     else:
-        limit_price = await _round_price(client, signal.symbol, mark_price * (1 + tier["offset_pct"]))
+        limit_price = await _round_price(client, norm_sym, mark_price * (1 + tier["offset_pct"]))
         entry_resp = await client.futures_create_order(
-            symbol=signal.symbol,
+            symbol=norm_sym,
             side=side,
             type=enums.ORDER_TYPE_LIMIT,
             price=limit_price,
@@ -122,18 +136,23 @@ async def place_order(signal, tier: Dict[str, float]):
         )
         entry_price = limit_price
 
-    # ----- protective orders -----
-
-    # compute prices already done above: sl_price, tp_price
+    # ----- compute protective prices -----
+    sl_price = await _round_price(
+        client,
+        norm_sym,
+        entry_price * (1 - tier["sl_pct"]) if is_long else entry_price * (1 + tier["sl_pct"]),
+    )
+    tp_price_raw = entry_price * (1 + tier["tp_pct"]) if is_long else entry_price * (1 - tier["tp_pct"])
+    tp_price = await _round_price(client, norm_sym, tp_price_raw)
 
     errors: list[Exception] = []
 
     # ----- stop-loss -----
     try:
         await client.futures_create_order(
-            symbol=signal.symbol,
+            symbol=norm_sym,
             side=opp_side,
-            type=enums.ORDER_TYPE_STOP_MARKET,
+            type=enums.FUTURE_ORDER_TYPE_STOP_MARKET,
             stopPrice=sl_price,
             closePosition=True,
             reduceOnly=True,
@@ -144,30 +163,44 @@ async def place_order(signal, tier: Dict[str, float]):
         await log_event("ERROR_TP_SL", {"symbol": signal.symbol, "order": "SL", "error": str(e)})
 
     # ----- take-profit -----
-    try:
-        await client.futures_create_order(
-            symbol=signal.symbol,
-            side=opp_side,
-            type=enums.ORDER_TYPE_LIMIT,
-            price=tp_price,
-            quantity=qty,
-            timeInForce="GTC",
-            reduceOnly=True,
-            newClientOrderId=f"{client_id}-TP",
-        )
-    except Exception as e:
-        errors.append(e)
-        await log_event("ERROR_TP_SL", {"symbol": signal.symbol, "order": "TP", "error": str(e)})
+    if tp_price <= 0:
+        errors.append(ValueError(f"Invalid TP price computed: {tp_price}"))
+    else:
+        try:
+            await client.futures_create_order(
+                symbol=norm_sym,
+                side=opp_side,
+                type=enums.ORDER_TYPE_LIMIT,
+                price=tp_price,
+                quantity=qty,
+                timeInForce="GTC",
+                reduceOnly=True,
+                newClientOrderId=f"{client_id}-TP",
+            )
+        except Exception as e:
+            errors.append(e)
+            await log_event("ERROR_TP_SL", {"symbol": signal.symbol, "order": "TP", "error": str(e)})
+
+    # ----- finalize -----
+    await client.close_connection()
 
     if errors:
-        await client.close_connection()
-        raise errors[0]
-        await client.close_connection()
-        raise errors[0]
-        
+        await log_event("WARNING", {"symbol": signal.symbol, "protective_errors": [str(e) for e in errors]})
+        return {
+            "status": "partial_success",
+            "entry_response": entry_resp,
+            "sl_price": sl_price,
+            "tp_price": tp_price,
+            "errors": [str(e) for e in errors],
+        }
 
-    await client.close_connection()
-    return {"entry": entry_resp, "sl_price": sl_price, "tp_price": tp_price}
+    return {
+        "status": "success",
+        "entry_response": entry_resp,
+        "sl_price": sl_price,
+        "tp_price": tp_price,
+    }
+
 # ---------------- Order TTL ----------------
 async def refresh_stale_orders(max_age_min: int = 15):
     """Cancel limit orders older than max_age_min; leave protective orders."""
@@ -212,9 +245,3 @@ async def close_stale_positions(ttl_hours: int = 48):
         except Exception:
             pass
     await client.close_connection()
-
-
-
-
-
-
