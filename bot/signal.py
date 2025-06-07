@@ -1,19 +1,26 @@
 import os, httpx, asyncio
 from pydantic import BaseModel, Field, ValidationError
-from typing import List, Optional
+from typing import List, Optional, Union
 
 class Signal(BaseModel):
     symbol: str
     price: float
     volume: float
-    timestamp: int
+    timestamp: Union[int, str]
     confidence: float
     side: str = Field(default="LONG")  # analytics feed currently single-direction
 
 aSYNC_TIMEOUT=5
 
 def _endpoint():
-    return os.getenv("SIGNAL_URL")
+    """Return analytics signal endpoint URL.
+
+    Respects the SIGNAL_URL environment variable if set; otherwise defaults to the
+    local analytics service (same VPS) at ``http://127.0.0.1:8080/api/signals``.
+    This prevents silent failures when the env var is missing and ensures the bot
+    always has a working endpoint.
+    """
+    return os.getenv("SIGNAL_URL", "http://127.0.0.1:8080/api/signals")
 
 def _threshold():
     return float(os.getenv("CONF_THRESHOLD", "0.60"))

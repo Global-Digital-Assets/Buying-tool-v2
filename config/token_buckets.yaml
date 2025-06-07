@@ -1,0 +1,17 @@
+# TP base percentage per volatility bucket
+volatility_groups:
+  ultra_stable:
+    tokens: [BTC, ETH, BNB]
+    tp_base: 1.0
+  stable:
+    tokens: [ADA, SOL, XRP, DOT, MATIC, LINK, LTC, TRX]
+    tp_base: 1.5
+  moderate:
+    tokens: [AVAX, UNI, ALGO, ATOM, FTM, NEAR, ICP, ETC, AAVE]
+    tp_base: 2.0
+  volatile:
+    tokens: [DOGE, MANA, SAND, AXS, INJ, APE]
+    tp_base: 2.5
+  extreme:
+    tokens: ["1INCH", SUSHI, COMP, YFI]
+    tp_base: 3.0

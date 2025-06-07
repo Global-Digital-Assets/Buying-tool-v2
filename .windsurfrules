@@ -1,0 +1,181 @@
+1. Code Style & Quality (Python‑centric)
+* PEP 8 + PEP 257 complianceEnforce with Black (formatter) + Flake8 (linter) + pydocstyle for docstrings.
+* Type hints everywhereRun mypy --strict in CI; avoid Any except when truly unavoidable.
+* Immutable data modelsUse @dataclass(frozen=True) or Pydantic BaseModel with Config.allow_mutation=False.
+2. Dependency & Environment Management
+* Poetry or pip‑tools for reproducible installs:
+    * Lock poetry.lock / requirements.txt.
+    * Pin to exact versions; review lockfile diffs in PRs.
+* Virtual environments per project (no global installs).
+* Separate Dockerfiles for dev vs. prod; multi‑stage builds to minimize image size.
+3. Configuration & Secrets
+* Pydantic BaseSettings backed by ENV + .env for typed config.
+* Never import os.getenv throughout code—read all settings at bootstrap, pass via constructor.
+* Vault or AWS Secrets Manager for production; fall back to env‑vars in staging/dev.
+4. Packaging & Releases
+* Structure as a proper Python package (src/ layout).
+* Use setup.cfg/pyproject.toml metadata; publish to private PyPI if reusable.
+* Automate changelog & version bump via Commitizen or Semantic‑Release.
+5. VPS Deployment & Web Server
+* Docker Compose (or Kubernetes) on VPS for service isolation.
+* Nginx → Gunicorn/Uvicorn reverse proxy:
+    * Set worker_processes = auto, timeout = 30s.
+    * Run Gunicorn as a systemd service with proper User/Group.
+* Firewall (ufw or iptables): only open ports 80/443 and SSH.
+* Let’s Encrypt (Certbot) auto‑renew for TLS; verify via cron or systemd timer.
+6. Crypto & Binance Integration
+* Use the official python‑binance SDK (or CCXT if multi‑exchange).
+* Decimal‑based arithmetic (decimal.Decimal) for price/qty—never floats.
+* API rate‑limit handler: wrap calls with exponential backoff + jitter.
+* Idempotency for order placement: generate unique clientOrderId.
+* Maintain a local ledger DB of sent orders + responses to reconcile fills.
+7. Security & Key Management
+* Store API keys in encrypted vault; load at runtime, never commit.
+* Restrict Binance key permissions (e.g. disable withdrawals unless testnet).
+* Validate server time against NTP to avoid signature errors.
+* Enable HTTP headers: HSTS, X‑Frame‑Options, Content Security Policy.
+8. Testing & CI/CD (Python Flavour)
+* pytest with plugins:
+    * pytest‑asyncio for async routes
+    * pytest‑mock / vcr.py for replaying Binance HTTP interactions
+* FactoryBoy or faker for test data; avoid live‑trading in CI (use testnet mocks).
+* CI pipeline:
+    1. Black → Flake8 → MyPy
+    2. Unit tests → Coverage (→ fail if < 90 %)
+    3. Build Docker image → Push to registry → Deploy to staging
+9. Logging, Monitoring & Alerting
+* Structured JSON logs via structlog or loguru; include request_id, user_id.
+* Expose Prometheus metrics endpoint; track order rates, latencies, error counts.
+* Integrate Sentry for exception capture (with PII scrubbing).
+10. Performance & Scalability
+* Async frameworks (FastAPI / AIOHTTP) for high‑throughput I/O.
+* Offload long‑running tasks (e.g. heavy charting, backtests) to Celery + Redis.
+* Use Redis or Memcached for caching rate‑limit buckets, market data TTL.
+
+CRYPTO FUTURES BOT
+Connect to your Hetzner server:ssh -i ~/.ssh/binance_futures_tool root@78.47.150.122
+
+Hetzner server SSH key
+-----BEGIN OPENSSH PRIVATE KEY-----b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZWQyNTUxOQAAACCgKpg75l42bl6nqPGB19mhr3u/FvLqpVM+F6h83KfQngAAAKA5gORcOYDkXAAAAAtzc2gtZWQyNTUxOQAAACCgKpg75l42bl6nqPGB19mhr3u/FvLqpVM+F6h83KfQngAAAECVjT6ZU1OJy2CpOaaBDrABKwO/XHGsxASibDLcrTBy+qAqmDvmXjZuXqeo8YHX2aGve78W8uqlUz4XqHzcp9CeAAAAHWJpbmFuY2UtZnV0dXJlcy10b29sLTIwMjUwNjAx-----END OPENSSH PRIVATE KEY-----
+BinanceAPI Key
+Nv38Jox0skxIGVNu24JgviZZCapB5pmzKLO39BDAjkdozbTUNy7nfBt1XW8hy28y
+Secret Key
+pNkrX9RBkEouPdzxhkH3ZfjLInZ0vWsEQrNNk2REnUAbuEogRIt5tfPa6Hc8qENm
+
+
+🎯 Repository & Deployment
+GitHub: https://github.com/Global-Digital-Assets/Buying-tool-v2
+
+🔑 Server Access
+
+bash
+CopyInsert
+# SSH
+ssh -i ~/.ssh/binance_futures_tool  root@78.47.150.122
+# Service logs (follow)
+journalctl -u futures-bot -f
+NOTE Keep the SSH private-key & Binance API keys in your own secrets store – do not commit them anywhere.
+
+📂 Project Layout (/srv/futures-bot)
+
+
+CopyInsert
+bot/
+ ├─ main.py            # FastAPI app + APScheduler
+ ├─ exchange.py        # Binance interaction & order logic
+ ├─ risk.py            # Dynamic TP calc + tiers
+ ├─ conf_decay.py      # Exponential confidence decay helper
+ ├─ signal.py          # Analytics API consumer
+ └─ __init__.py
+config/
+ └─ token_buckets.yaml # Volatility groups & base TP%
+data/
+ ├─ trades.sqlite      # Raw event log (aiosqlite)
+ └─ outcomes.csv       # Realised PnL CSV
+.env                   # Credentials & flags (chmod 600)
+requirements.txt
+
+⚙️ .env (essential keys only)
+
+bash
+CopyInsert
+API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+API_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+BINANCE_TESTNET=false                # true = testnet
+ANALYTICS_API_URL=http://78.47.150.122:8080/api/analysis
+TRADING_ENABLED=true                 # flip to false to halt new trades
+# Feature flags
+PROTECTIVE_DELAY_SEC=10              # wait before TP/SL (race-condition guard)
+PARTIAL_TP=true
+TP1_FRAC=0.5                         # 50 % offload at TP1
+
+📊 Analytics API
+• GET 
+/api/analysis → list of actionable signals (symbol, side, confidence)
+• GET /api/status → health JSON
+
+
+📈 6-Tier Confidence Table
+| Tier | Confidence | Leverage | Position % (wallet) | Base-TP (%) | |------|------------|----------|---------------------|-------------| | 1 | 95-100 % | 10× | 12 % | 4.5 | | 2 | 85-94 % | 8× | 10 % | 4.0 | | 3 | 75-84 % | 7× | 8 % | 3.5 | | 4 | 70-74 % | 6× | 6 % | 3.0 | | 5 | 65-69 % | 5× | 4 % | 2.8 | | 6 | 60-64 % | 3× | 3 % | 2.5 |
+TP is then dynamically scaled:
+
+
+CopyInsert
+tp = bucket_base * (0.8 + confidence*0.4) * sqrt(hold_hours/3)
+SL  = max(1 %, 2 × TP)
+
+📄 token_buckets.yaml (editable live)
+
+yaml
+CopyInsert
+volatility_groups:
+  ultra_stable:
+    tokens: [BTC, ETH, BNB]
+    tp_base: 1.0
+  stable:
+    tokens: [ADA, SOL, XRP, DOT, MATIC, LINK, LTC, TRX]
+    tp_base: 1.5
+  moderate:
+    tokens: [AVAX, ATOM, AAVE, NEAR]
+    tp_base: 2.0
+  volatile:
+    tokens: [PEPE, SHIB, DOGE, GMT, SAND]
+    tp_base: 3.0
+Add / move tokens as needed; no redeploy required.
+
+🔄 Trade Cycle (runs every 15 min)
+1. Fetch signals (30 symbols).
+2. Filter side ∈ {BUY_LONG, BUY_SHORT} & confidence ≥ 60 %.
+3. Skip symbol if already positioned.
+4. Map confidence → tier (table above).
+5. Calculate dynamic TP, SL.
+6. Place entry (market), SL, and TP orders.• If PARTIAL_TP=true – TP1 closes 50 % (reduceOnly); SL full qty.
+7. Write TP_OK / SL_OK events to DB + Telegram (errors only).
+
+🛡️ Position-Lifecycle Manager (15 min)
+• HARD STOP Close after 6 h.• SIGNAL FLIP Close if opposite direction ≥ 0.60 conf.• CONFIDENCE DECAY Close when decayed < 0.40.• Partial-TP flow: – Detect TP1 fill (qty ≈ 50 % of original).– Cancel remaining orders; set breakeven SL; state = REDUCING.
+
+🔧 Operations
+
+bash
+CopyInsert
+# Service control
+systemctl start/stop/restart futures-bot
+systemctl status futures-bot
+
+# Live tail
+journalctl -u futures-bot -f
+
+# Health endpoint
+curl http://localhost:8000/health
+# -> {"status":"OK","trading_enabled":true,"active_positions":n}
+Emergency halt / resume:
+
+bash
+CopyInsert
+curl -X POST http://localhost:8000/halt
+curl -X POST http://localhost:8000/resume
+
+✅ Current Feature Checklist
+| Feature | Status | |---------|--------| | Dynamic TP/SL via YAML buckets | ✅ | | 6-tier leverage + pos % | ✅ | | 10 s protective-order delay | ✅ | | Partial-TP (50 % + breakeven) | ✅ | | 6 h hard-stop | ✅ | | Signal-flip close | ✅ | | Confidence-decay close | ✅ | | PositionState guards | ✅ | | Outcome CSV logging | ✅ | | Telegram error alerts | ✅ (set 
+TELEGRAM_TOKEN + CHAT_ID) |

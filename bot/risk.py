@@ -1,7 +1,9 @@
 """Risk management and execution parameters per confidence tier."""
 import os
 from typing import Optional, Dict
-from .exchange import get_wallet_balance, get_open_position
+from pathlib import Path
+from math import sqrt, exp
+import yaml  # type: ignore
 
 # (lo, hi, leverage, pos_pct, tp_pct, order_type, offset_pct, ttl_min)
 _TIERS = [
@@ -14,6 +16,59 @@ _TIERS = [
 ]
 
 STOP_LOSS_PCT = float(os.getenv("STOP_LOSS_PCT", "0.15"))
+
+# ---------------- Dynamic TP & Confidence Decay -----------------
+_CFG_PATH = Path(__file__).resolve().parent.parent / "config" / "token_buckets.yaml"
+
+def _load_token_buckets() -> Dict[str, float]:
+    """Return mapping TOKEN -> tp_base% from YAML.  Falls back to empty dict."""
+    buckets: Dict[str, float] = {}
+    if _CFG_PATH.exists():
+        try:
+            cfg = yaml.safe_load(_CFG_PATH.read_text()) or {}
+            for grp in cfg.get("volatility_groups", {}).values():
+                base = float(grp.get("tp_base", 2.0))
+                for tok in grp.get("tokens", []):
+                    buckets[tok.upper()] = base
+        except Exception:
+            # Minimal fallback parser (handles the simple structure we use)
+            current_base = 2.0
+            for line in _CFG_PATH.read_text().splitlines():
+                s = line.strip()
+                if s.startswith("tp_base:"):
+                    current_base = float(s.split(":", 1)[1])
+                elif s.startswith("tokens:"):
+                    inner = s.split("[", 1)[1].split("]", 1)[0]
+                    for tok in inner.split(","):
+                        buckets[tok.strip().upper()] = current_base
+    return buckets
+
+_TOKEN_BUCKETS = _load_token_buckets()
+
+# Defaults / tunables (env-overrideable)
+DEFAULT_TP = float(os.getenv("DEFAULT_TP", "2.0"))  # percent
+MIN_TP = float(os.getenv("MIN_TP", "0.3"))          # percent
+DECAY_K = float(os.getenv("DECAY_K", "0.30"))      # h⁻¹  (half-life ~2.3 h)
+
+def calc_tp_pct(symbol: str, confidence: float, hold_hours: int = 3) -> float:
+    """Return take-profit % (e.g. 1.75 for 1.75 %).
+
+    Logic: base % from volatility bucket × (0.8–1.2 depending on confidence) × √t.
+    Ensures TP never below MIN_TP.
+    """
+    token = symbol.replace("USDT", "").upper()
+    base = _TOKEN_BUCKETS.get(token, DEFAULT_TP)
+
+    # 0.0 ≤ confidence ≤ 1.0  →  0.8–1.2 multiplier
+    conf_mult = 0.8 + confidence * 0.4
+    time_mult = sqrt(max(hold_hours, 1) / 3.0)
+
+    tp = base * conf_mult * time_mult
+    return max(round(tp, 2), MIN_TP)
+
+def decay_confidence(initial_conf: float, age_hours: float) -> float:
+    """Exponential decay of confidence over time (hours)."""
+    return initial_conf * exp(-DECAY_K * age_hours)
 
 async def _select_tier(conf: float) -> Optional[Dict[str, float]]:
     for lo, hi, lev, pos, tp, otype, offset, ttl in _TIERS:
@@ -30,12 +85,5 @@ async def _select_tier(conf: float) -> Optional[Dict[str, float]]:
     return None
 
 async def risk_check(signal):
-    tier = await _select_tier(signal.confidence)
-    if not tier:
-        return None
-    pos = await get_open_position(signal.symbol)
-    if pos and abs(float(pos.get("positionAmt", 0))) != 0:
-        return None
-    if await get_wallet_balance() <= 0:
-        return None
-    return tier
+    """Return tier purely based on confidence; NO other risk gates."""
+    return await _select_tier(signal.confidence)
